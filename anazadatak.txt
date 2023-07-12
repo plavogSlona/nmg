@@ -1,0 +1,55 @@
+/******************************************
+Ime i prezime:
+Broj indeksa :
+******************************************/
+
+#define NOP addc(R0,0,R0)
+#define SP R29
+#define LP R28
+#define BP R27
+#define MOVE(x,y) addc(x,0,y)
+#define CMOVE(c,Rc) addc(R31,c,Rc)
+#define BR(x) beq(R31,x,R31)
+#define DEALLOCATE(k) subc(SP,4*k,SP)
+#define PUSH(x) addc(SP,4,SP) __NEW_LINE__ st(x,-4,SP)
+#define POP(x) ld(SP,-4,x) __NEW_LINE__ subc(SP,4,SP)
+#define JMP(x) jmp(x, R31)
+
+.text
+	BR(MAIN)
+	NOP
+	NOP
+	
+MAIN:
+	ld(R5,0,R7) //R7=mem[0] tj. N
+	CMOVE(0,R2) //i=0
+	CMOVE(5,R9)  //ne treba
+	ld(R5,0,R17)  ucitala isti taj nulti element N u r17 jer ce trebati za kvadrat 
+
+	
+WHILE:
+	beq(R7,UPIS,R22)   //ako je nula da skoci na upis
+	ld(R2,4,R3) //R3=mem[i]   u r3 ucitavamo elemente,krenula od cetvorke jer se prvi element odnosi na N, stavila r2 jer je to i a njega cu svaki put uvecavati za 4
+	addc(R2,4,R2)  //i uvecavamo za 4
+	subc(R7,1,R7)  //smanjimo za jedan
+	addc(R3,2,R3)  //svaki element trebauvecati za 2
+	add(R8,R3,R8)  //pa to sabrati 
+	add(R15,R17,R15) //u r15 upisala r17,jer je potrebno N NA KVADRAT,a to moze samo sabiranjem pet puta peticu, pa je to upisala u while
+	BR(WHILE)
+	
+UPIS:
+	add(R8,R15,R8) //n na kvadrat plus suma,r8 je suma, r15 je n na kvadrat
+	shrc(R8,2,R8) //dij sa 4
+	st(R8,0x24,R1) //cuvanje ovdje 
+
+KRAJ:
+	BR(KRAJ)
+
+
+.data
+5 
+-1
+-2
+-3
+-4
+-5
