@@ -1,0 +1,168 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+
+------------------------------------------------------------------------------------------
+-- OBAVEZNO UPIŠITE IME, PREZIME i BROJ INDEKSA!
+-- Ime i prezime: Nevena Marjanovic
+-- Broj indeksa: pr30/2020
+-- Radim samo popravni (upisati DA ako je iskaz tačan): 
+------------------------------------------------------------------------------------------
+
+entity Zadatak1 is port ( 
+	iCLK  	: in  std_logic;
+	iRST  	: in  std_logic;
+	iWEIGHT 	: in  std_logic_vector(10 downto 0);
+	iON	: in  std_logic;
+	oWEIGHT : out std_logic_vector(10 downto 0);
+	oERROR	: out std_logic
+	);
+end entity;
+
+architecture Behavioral of Zadatak1 is
+	signal sCNT	: std_logic_vector(3 downto 0); 
+	signal sEN		: std_logic;
+	signal sTC 	: std_logic;
+	signal sERROR 	: std_logic;
+	signal sLOAD 	: std_logic;
+	signal sWEIGHT	: std_logic_vector(10 downto 0);
+	signal sTARA 	: std_logic_vector(10 downto 0);
+	
+	type tSTATE is (IDLE, TARA, NETO, PAUSE, ERROR);
+	signal sSTATE, sNEXT_STATE : tSTATE;
+	
+begin
+
+	--brojac po modulu 10 (period mjerenja hrane)
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
+			sCNT <= (others => '0');
+		elsif rising_edge(iCLK) then
+			if(sEN = '1') then
+				if(sCNT = "1001") then
+					sCNT <= (others => '0');
+				else 
+					sCNT <= sCNT + 1;
+				end if;
+			end if;
+		end if;
+	end process;
+	
+	
+	sTC <= '1' when sCNT = "1001" else '0';
+	
+
+
+	--LIMITER(ISPRAVLJEN)
+  
+         	sWEIGHT <= "01111101000" when sWEIGHT > "01111101000" else   sWEIGHT;
+	sERROR <= '1' when sWEIGHT > "01111101000" else '0';
+
+	
+	--tara registar
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
+			sTARA <= (others => '0');
+		elsif rising_edge(iCLK) then
+			if(sEN = '1') then
+				if(sLOAD = '1') then
+					sTARA <= iWEIGHT;
+				end if;
+			end if;
+		end if;
+	end process;
+	
+	--fsm
+	--next state
+	
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
+			sSTATE <= IDLE;
+		else 
+			sSTATE <= sNEXT_STATE;
+		end if;
+	end process;
+	
+	--promjena stanja
+	
+	process(sSTATE, iON, sTC) begin
+		case(sSTATE) is
+		
+			when IDLE =>
+				if(iON = '1') then
+					sNEXT_STATE <= TARA;
+				else 
+					sNEXT_STATE <= IDLE;
+				end if;
+				
+			when TARA =>
+				if(sTC = '1') then
+					sNEXT_STATE <= NETO;
+				elsif(sERROR = '1') then --masa isuvise velika, upalio se fleg, moramo to gore u procesu napisati
+					sNEXT_STATE <= ERROR;
+				end if;
+				
+			when NETO =>
+				if(sTC = '1') then
+					sNEXT_STATE <= PAUSE;
+				elsif(sERROR = '1') then
+					sNEXT_STATE <= ERROR;
+				end if;
+				
+			when PAUSE =>
+				if(sTC = '1') then
+					sNEXT_STATE <= IDLE;
+				end if;
+				
+			when ERROR =>
+				sNEXT_STATE <= IDLE;
+			
+		end case;
+	end process;
+	
+	--funkcija izlaza
+	
+	
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
+			oERROR <= '0';
+			oWEIGHT <= "00000000000";
+			sEN <= '0';
+			sLOAD <= '0';
+		elsif rising_edge(iCLK) then
+			case(sSTATE) is
+			
+				when IDLE =>
+					oERROR <= '0';
+					oWEIGHT <= "00000000000";
+					sEN <= '0';
+					sLOAD <= '0';
+					
+				when TARA =>
+					oERROR <= '0';
+					oWEIGHT <= "00000000000";
+					sEN <= '1';
+					sLOAD <= '1';
+					
+				when NETO =>
+					oERROR <= '0';
+					oWEIGHT <= sWEIGHT - sTARA; 
+					sEN <= '1';
+					sLOAD <= '0';
+					
+				when PAUSE =>
+					oERROR <= '0';
+					oWEIGHT <=  sWEIGHT - sTARA;  
+					sEN <= '1';
+					sLOAD <= '0';
+					
+				when ERROR =>
+					oERROR <= '1';
+					oWEIGHT <= "00000000000";
+					sEN <= '0';
+					sLOAD <= '0';
+			end case;
+		end if;
+	end process;
+	
+end Behavioral;

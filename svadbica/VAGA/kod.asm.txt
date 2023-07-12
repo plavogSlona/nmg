@@ -1,0 +1,149 @@
+/*-----------------------------------------------------------------------------------------
+// OBAVEZNO UPIŠITE IME, PREZIME i BROJ INDEKSA! U suprotnom zadatak neće biti pregledan!
+// Ime i prezime: Nevena Marjanovic
+// Broj indeksa: pr30/2020
+------------------------------------------------------------------------------------------*/
+
+/*
+	// .data
+	
+	short a = 4;
+	short b = 7;
+	short* p_s		   = 0x10;
+	short* p_result_p	= 0x11;
+	short* p_result_o	= 0x12;
+	short* p_done		= 0x20;
+
+
+*/
+.data
+4			// adresa: 0
+7			// adresa: 1
+0x10		// adresa: 2
+0x11		// adresa: 3
+0x12		// adresa: 4
+0x20		// adresa: 5
+
+/*
+	// .text
+	short P = 0;
+	short O = 0;
+
+	if(a < b)
+		*p_s = a;
+	else
+		*p_s = b;
+
+	P = a * b;		// Petlju implementirati po vrednosti *p_s
+	O = 2*a + 2*b;
+	
+	*p_result_p = P;
+	*p_result_o = O;
+	*p_done = 1;
+
+*/
+
+.text
+/*
+	Recommended register list:
+	R0 - a
+	R1 - b
+	R2 - p_s
+	R3 - tmp
+	R4 - p_result_p i p_result_o 
+	R5 - p_done
+	R6 - P
+	R7 - O
+*/
+begin:
+	
+	ld R0,R0 // a = 4 na adresi 0
+	inc R0,R0 // R0 = 1
+	ld R1,R0 // b = 7 na adresi 1
+	inc R0,R0 // R0 = 2
+	ld R2,R0 //short* p_s na adresi 2
+	sub R3, R3, R3	//R3 ce sluziti kao privremeni registar tmp
+	sub R4, R4, R4	//R4 ce sluziti za adresiranje p_result_p i p_result_o
+	sub R5, R5, R5	//R5 ce sluziti za adresiranje p_done
+	sub R6, R6, R6	// short P = 0
+	sub R7, R7, R7	// short O = 0
+	jmp obim
+	
+obim: 
+	//DOBIJANJE OBIMA
+
+	ld R3, R0		//Ucitamo a u R3
+	shl R3, R3	//Pomnozimo a sa 2
+	st R3,R7 		//smjestimo 2a u O
+
+	sub R3, R3, R3	//ocistimo R3 zbog b
+
+	ld R3, R1		//Ucitamo b u R3
+	shl R3, R3	//Pomnozimo a sa 2
+	add R7, R7, R3 	//smjestimo i 2b u O
+
+	st R7, R4		//Upiši rezultat P na adresu p_result_p		
+	jmp povrsina
+
+povrsina:
+	sub R3, R3, R3	//ocistimo R3
+	//DOBIJANJE POVRSINE
+	sub R3, R0, R1 	// a < b ?
+   	jmps a_manje
+
+a_vece:
+	st R1, R2 		//*p_s = b;
+a_manje: 
+	st R0, R2		//*p_s = a;
+	shl R3, R2	//Pomnozimo a sa 2
+
+	sub R3, R3, R3	//ocistimo R3 
+	ld R3, R2 		//Ucitamo p_s u R3
+	mov R6, R0		; P = a
+	shl R6, R3		; P = a * p_s
+
+
+
+	sub R0,R0,R0 //ocistimo registar
+	inc R0,R0	
+	inc R0,R0
+	inc R0,R0 
+	
+	st R6,R0 //smjestimo P na p_result_p
+	inc R0,R0
+	st R7, R0 //smjestimo O na p_result_o
+	inc R0,R0
+	st R4, R0
+	jmp end
+
+
+/*calculate:
+	ld R3, R2		; Učitaj p_s u R3 (dužina petlje)
+	sub R4, R4, R4	; R4 će služiti kao brojač petlje
+
+loop:
+	ld R0, 0(R4)	; Učitaj vrijednost sa adrese R4 u R0
+	mul R0, R1		; Pomnoži vrijednost iz R0 sa b
+	add R6, R6, R0	; Dodaj rezultat u R6 (P)
+
+	inc R4			; Inkrementiraj brojač petlje
+	cmp R4, R3		; Uporedi brojač petlje i p_s
+	jle loop		; Ako je manje ili jednako, ponovi petlju
+
+	ld R0, a		; Učitaj a u R0
+	shl R0, R0		; Pomnoži a sa 2
+	add R0, R0, R0	; Pomnoži rezultat sa 2
+	add R7, R0, R1	; Dodaj rezultat u R7 (O)
+
+	st R6, 0(R4)		; Upiši P na adresu p_result_p
+	inc R4
+	st R7, 0(R4)		; Upiši O na adresu p_result_o
+	inc R4
+	mov R0, 1
+	st R0, 0(R4)		; Upiši vrijednost 1 na adresu p_done
+*/
+
+	
+
+end:
+	jmp end

@@ -1,0 +1,85 @@
+---------------------------------------------
+-- Ime i prezime:
+-- Broj indeksa:
+---------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity Chess_tb is
+end entity;
+ 
+architecture Test of Chess_tb is
+  
+   signal sCLK		: std_logic := '0';
+   signal sRST 	: std_logic := '0';
+   signal sSTART  : std_logic := '0';
+	signal sPLAYER : std_logic := '0';
+	signal sEND	   : std_logic_vector(1 downto 0);
+
+	
+	constant iCLK_period : time := 10 ns; 
+   
+	component Chess is port ( 
+	iCLK  	: in  std_logic;
+	iRST  	: in  std_logic;
+	iSTART  	: in  std_logic;
+	iPLAYER 	: in  std_logic;
+	oEND		: out std_logic_vector(1 downto 0)
+	);
+	end component;
+
+begin
+
+   uut: Chess port map (
+          iCLK 	=> sCLK,
+          iRST 	=> sRST,
+			 iSTART	=> sSTART,
+          iPLAYER => sPLAYER,
+          oEND 	=> sEND
+        );
+		  
+	iCLK_process: process
+	begin
+		sCLK <= '0';
+		wait for iCLK_period / 2; -- iCLK_period je konstanta
+		sCLK <= '1';
+		wait for iCLK_period / 2;
+	end process;
+
+   stim_proc : process
+   begin		
+		sRST<='1';           --stanje je IDLE
+		wait for 3.25*iCLK_period;
+		sRST<='0';
+		
+		sSTART<='1';     --stanje WHITE igra beli igrac
+		wait for 6*iCLK_period;
+		sSTART<='0';
+		
+		sPLAYER<='1';    --stanje BLACK igra crni igrac
+		wait for 6*iCLK_period; --crni igrac igra 6 poteza
+		wait for 300*iCLK_period; --crnom igracu istice vreme
+		
+		
+		
+		--treca tacka
+		sRST<='1';
+		wait for 20*iCLK_period;
+		sRST<='0';
+		sSTART<='1';
+		
+		--cetvrta tacka
+		wait for 4*iCLK_period; --beli igrac igra 4 poteza
+		sPLAYER<='1';
+		wait for 4*iCLK_period; --crni igrac igra 4 poteza
+		sPLAYER<='0';
+		wait for 300*iCLK_period; --belom igracu istice vreme
+		
+		
+		
+		--resetovati do kraja simulacije
+		sRST<='1';
+		
+		wait;
+   end process;
+end architecture;

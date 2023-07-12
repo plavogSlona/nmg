@@ -1,0 +1,88 @@
+/*
+	// .data
+	
+	const short a = 30;
+	const short b = 60;
+	const short dx = 3;
+	const short* p_result = 0x30;
+*/
+
+.data
+30
+60
+3
+0x30
+
+
+/*
+	// .text
+	
+	short P = 0;
+	for(short x = a; x <= b; x += dx){
+		short y = 17*x + 7;
+		short dP = y*dx;
+		P += dP;
+	}
+
+	*p_result = P;
+*/
+
+.text
+/*
+ * R0 - a
+ * R1 - b
+ * R2 - dx
+ * R3 - x
+ * R4 - y
+ * R5 - za mnozenje sa dx
+ * R6 - dP
+ * R7 - P
+ */
+begin:
+	ld R3, R0  //R3=x (odgovara a u prvoj iteraciji)
+	inc R0, R0 //R0=1 
+	ld R1, R0  //R1=b (60)
+	inc R0, R0 //R0=2
+	ld R2, R0  //R2=dx (3)
+
+	
+petlja:
+	sub R0, R0, R0 //R0=0
+	inc R0, R0 //R0=1
+	ld R1, R0  //Postavljamo svaki put na 60 jer ce se promeniti vrednost u registru prilikom oduzimanja
+	sub R1, R1, R3
+	jmps kraj_petlje
+
+	shl R4, R3
+	shl R4, R4
+	shl R4, R4
+	shl R4, R4
+	add R4, R4, R3 //siftujemo u levo 4 puta da bismo pomnozili sa 16 i dodajemo R3 da bi bilo 17x
+	sub R0, R0, R0 //R0=0
+	inc R0, R0 //R0=1
+	shl R0, R0 //R0=2
+	shl R0, R0 //R0=4
+	shl R0, R0 //R0=8
+	dec R0, R0  //R0=7
+	add R4, R4, R0  //17x+7
+	
+	sub R6, R6, R6
+	add R6, R6, R4
+	add R6, R6, R4
+	add R6, R6, R4 //Racunanje dP (dx je 3)
+		
+	add R7, R7, R6 //P+=dP
+	
+	add R3, R3, R2  //uvecavamo vrednost x za korak dx(3)
+	jmp petlja
+kraj_petlje:
+	sub R0, R0, R0  //R0=0
+	inc R0, R0
+	inc R0, R0
+	inc R0, R0
+	st R7, R0  //sacuvamo vrednost P na adresu 0x30
+
+	
+	
+end:
+	jmp end

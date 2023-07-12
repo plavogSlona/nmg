@@ -1,0 +1,184 @@
+---------------------------------------------
+-- Ime i prezime: Teodora Ceremidzic
+-- Broj indeksa: PR154/2020
+---------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.ALL;
+
+entity Printer is port ( 
+	iCLK  		: in  std_logic;
+	iRST  		: in  std_logic;
+	iPRINT  	: in  std_logic;
+	iADD_PAPER  : in  std_logic;
+	iAMOUNT		: in  std_logic_vector(7 downto 0);
+	oPRINT		: out std_logic;
+	oERROR		: out std_logic
+	);
+end entity;
+
+architecture Behavioral of Printer is
+
+	signal sEMPTY : std_logic; 
+	signal sPAPER_EN : std_logic;
+	signal sSLEEP_EN: std_logic;
+	signal sSLEEP_TC: std_logic;
+	signal sPRINT_EN: std_logic;
+	signal sPRINT_TC: std_logic;
+	signal sCNT1 : std_logic_vector(6 downto 0);   
+	signal sCNT2 : std_logic_vector(3 downto 0);
+	signal sCNT3 : std_logic_vector(7 downto 0);
+  
+	type state_type is (IDLE, SLEEP, CHECK_PAPER, PRINT, ERROR); 
+	signal state, state_next : state_type;
+	
+begin
+
+--brojac sleep cnt
+
+process(iCLK) begin
+		if(rising_edge(iCLK)) then
+			if(iRST = '1') then
+				sCNT1 <= "0000000";
+			else
+				if(sCNT1 < 60) then
+					sCNT1 <= sCNT1 + 1;
+				elsif(sCNT1 >= 60) then
+					sCNT1 <= "0000000";
+				end if;
+			end if;
+		end if;
+	end process;
+	
+	sSLEEP_TC <= '1' WHEN sCNT1 = 60  ELSE '0';
+	
+
+	
+
+	
+-- AUTOMAT - funkcija pamcenja stanja
+	process(iCLK) begin
+		if(rising_edge(iCLK)) then
+			if(iRST = '1') then
+				state <= IDLE;
+			else
+				state <= state_next;
+			end if;
+		end if;
+	end process;
+	
+	
+	
+-- AUTOMAT: FUNKCIJA prelaza
+	process(state, sSLEEP_TC, iPRINT, sPRINT_TC, sEMPTY) begin
+		case state is
+			WHEN IDLE =>
+				if(iPRINT = '1') then
+					state_next <= CHECK_PAPER;
+				elsif(sSLEEP_TC = '1') then
+					state_next <= SLEEP;
+				else
+					state_next <= IDLE;
+				end if;
+				
+			WHEN CHECK_PAPER =>
+				if(sEMPTY = '1') then
+					state_next <= ERROR;
+				else
+					state_next <= PRINT;
+				end if;
+				
+			WHEN PRINT =>
+				if(sPRINT_TC = '1') then
+					state_next <= IDLE;
+				else
+					state_next <= PRINT;
+				end if;
+				
+			WHEN ERROR =>
+				state_next <= IDLE;
+			
+			WHEN SLEEP =>
+				if(iPRINT = '1') then
+					state_next <= IDLE;
+				else
+					state_next <= SLEEP;
+				end if;
+			
+				
+			WHEN OTHERS => state_next <= IDLE;
+		end case;
+	end process;
+		
+		
+--brojac print cnt
+
+process(iCLK) begin
+		if(rising_edge(iCLK)) then
+			if(iRST = '1') then
+				sCNT2 <= "0000";
+		else
+				if(sCNT2 < 15) then
+					sCNT2 <= sCNT2 + 1;
+			elsif(sCNT2 >= 15) then
+				sCNT2 <= "0000";
+				end if;
+		end if;
+	end if;
+end process;
+	
+sPRINT_TC <= '1' WHEN sCNT2 = 15  ELSE '0';
+	
+
+--brojac paper cnt
+
+process(iCLK) begin
+		if(rising_edge(iCLK)) then
+			if(iRST = '1') then
+				sCNT3 <= iAMOUNT;
+			else
+				if(iADD_PAPER = '1') then
+					sCNT3 <= iAMOUNT;
+					if(sPAPER_EN = '1') then
+						sCNT3 <= sCNT3 - 1;
+					end if;
+				end if;
+			end if;
+		end if;
+	end process;
+	
+sEMPTY <= '1' WHEN sCNT3 = 0  ELSE '0';
+
+
+
+
+
+--izlazi iz automata
+
+
+	oPRINT <= '1' WHEN  state = PRINT ELSE '0';
+	oERROR <= '1' WHEN  state = ERROR ELSE '0';
+	sSLEEP_EN <= '1' WHEN  state = IDLE ELSE '0';
+	sPAPER_EN <= '1' WHEN  state = CHECK_PAPER ELSE '0';
+	sPRINT_EN <= '1' WHEN  state = PRINT ELSE '0';
+	
+	
+	
+	
+
+	
+
+	
+
+	
+				
+				
+				
+			
+				
+	
+
+
+
+
+end Behavioral;

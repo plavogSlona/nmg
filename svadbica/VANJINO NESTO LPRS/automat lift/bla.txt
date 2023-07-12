@@ -1,0 +1,137 @@
+process(iCLK, iRST)begin
+	if(iRST = '1')then
+		sSTATE <= IDLE;
+	elsif(rising_edge(iCLK))then
+		case(sSTATE)is
+			when IDLE =>
+							if(sIDLE_TC = '1')then
+								sSTATE <= CHECK_STATE;
+							end if;
+
+			when CHECK_STATE =>
+							if(sDIRECTION = "10")then
+								sSTATE <= UP;
+							elsif(sDIRECTION = "00")then
+								sSTATE <= OPEN_DOOR;
+							elsif(sDIRECTION = "01")then
+								sSTATE <= DOWN;
+							end if;
+
+			when UP	=>
+							if(sCURRENT_FLOOR /= iNEW_FLOOR)then
+								sSTATE <= MOVE_UP;
+							else
+								sSTATE <= OPEN_DOOR;
+							end if;
+
+			when DOWN =>
+							if(sCURRENT_FLOOR /= iNEW_FLOOR)then
+								sSTATE <= MOVE_DOWN;
+							else
+								sSTATE <= OPEN_DOOR;
+							end if;
+
+			when MOVE_UP =>
+							if(sMOVE_TC = '1')then
+								sSTATE <= UP;
+							else
+								sSTATE <= MOVE_UP;
+							end if;
+
+			when MOVE_DOWN =>
+							if(sMOVE_TC = '1')then
+								sSTATE <= DOWN;
+							else
+								sSTATE <= MOVE_DOWN;
+							end if;
+			when OPEN_DOOR =>
+							if(iSTAY_OPEN = '1')then
+								sSTATE <= STAY_OPEN;
+							else
+								sSTATE <= IDLE;
+							end if;
+			when STAY_OPEN =>
+							if(sCURRENT_FLOOR = iNEW_FLOOR)then
+								sSTATE <= OPEN_DOOR;
+							else
+								sSTATE <= STAY_OPEN;
+							end if;
+		end case;
+	end if;
+end process;
+
+process(iCLK, iRST)begin
+	case(sSTATE)is
+		when IDLE =>
+			oDOOR_OPENED <= '0';
+			sCLEAR_REQ <= '0';
+			sMOVE <= "00";
+			sEN <= '0';
+			sCNT_EN <= "000";
+
+		when CHECK_STATE =>
+			o_DOOR_OPENED <= '0';
+			sCLEAR_REQ <= '0';
+			sMOVE <= "00";
+			sEN <= 
+
+
+	end case;
+end process;
+end if;
+
+
+process(iCLK, iRST)begin
+	if(iRST = '1')then
+		sIDLE_CNT <= "000";
+	elsif(rising_edge(iCLK))then
+		if(sIDLE_CNT = "100")then
+			sIDLE_CNT <= "000";
+		end if;
+		if(sCNT_EN(2) = '1')then
+			sIDLE_CNT <= sIDLE_CNT + 1;
+		end if;
+	end if;
+end process;
+
+process(iCLK, iRST)begin
+	if(iRST = '1')then
+		sMOVE_CNT <= "00000";
+	elsif(rising_edge(iCLK))then
+		if(sMOVE_CNT = "100")then
+			sMOVE_CNT <= "00000";
+		end if;
+		if(sCNT_EN(1) = '1')then
+			sMOVE_CNT <= sMOVE_CNT + 1;
+		end if;
+	end if;
+end process;
+
+process(iCLK, iRST)begin
+	if(iRST = '1')then
+		sDOOR_CNT <= "0000";
+	elsif(rising_edge(iCLK))then
+		if(sDOOR_CNT = "1010")then
+			sDOOR_CNT <= "0000";
+		end if;
+		if(sCNT_EN(0) = '1')then
+			sDOOR_CNT <= sDOOR_CNT + 1;
+		end if;
+	end if;
+end process;
+
+sIDLE_TC <= '1' when sIDLE_CNT = "100" else '0';
+sMOVE_TC <= '1' when sMOVE_CNT = "10100" else '0';
+sDOOR_TC <= '1' when sDOOR_CNT = "1010" else '0';
+
+process(iCLK, iRST)begin
+	if(iRST = '1')then
+		sNEW_REQ <= '0';
+	elsif(rising_edge(iCLK))then
+		if(iNEW_REQ = '1')then
+			sNEW_REQ <= '1';
+		else
+			sNEW_REQ <= '0';
+		end if;
+	end if;
+end process;

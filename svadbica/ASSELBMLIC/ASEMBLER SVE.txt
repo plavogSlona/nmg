@@ -1,0 +1,519 @@
+D U P L I K A T I     U    N I Z U
+
+/*
+Pronalaženje duplikata u nizu
+Napisati program u asemblerskom jeziku koji proverava da li u zadatom nizu od 10 elemenata ima duplikata.
+Napraviti novi niz sa duplikatima i upisati ih u memoriju za podatke nakon prvog niza (na adresu 11)
+*/
+/*
+// .data
+short N = 10;
+short a[10] = { 65, 1, 6, -1, 6, 3, 5, -2, 65, 3};
+short b[10];
+// .text
+short k = 0;
+for (short i = 0; i < N; i++)
+for(short j = i + 1; j < N; j++)
+ if(a[i] == a[j])
+{
+b[k] = a[i];
+k++;
+}
+
+    R0 - i - index niza
+    R1 - j - index sledećeg elementa
+    R2 - N = 10
+    R3 - k - index novog niza
+    R4 - short* a - adresa niza
+    R5 - short* b - adresa novog niza
+
+*/
+.data
+    10 // N = 10
+    65, 1, 6, -1, 6, 3, 5, -2, 65, 3
+.text
+
+begin:
+    ld R2, R0 // R2 = N = 10
+    inc R4, R0 // R4 = short* a = 1
+    add R5, R4, R2 // R5 = short* b = 11
+    // sub R3, R3, R3 // k = 0
+
+for_i_init:
+// sub R0, R0, R0 // i = 0
+
+for_i_test:
+    sub R7, R0, R2 // i < N
+    jmpz for_i_end
+
+for_i_body:
+for_j_init:
+    inc R1, R0 // R1 = j = i + 1
+
+for_j_test:
+    sub R7, R1, R2 // j < N
+    jmpz for_j_end
+
+for_j_body:
+    add R6, R4, R0
+    ld R6, R6 // R6 = a[i]
+    add R7, R4, R1
+    ld R7, R7 // R7 = a[j]
+    sub R7, R7, R6 // if a[i] == a[j]
+    jmpz DUPLIKAT
+    jmpnz for_j_inc
+
+DUPLIKAT:
+    add R7, R5, R3
+    st R6, R7 // mem[k] = a[i]
+    inc R3, R3 // k++
+
+for_j_inc:
+    inc R1, R1 // j++
+    jmp for_j_test
+
+for_j_end:
+for_i_inc:
+    inc R0, R0 // i++
+    jmp for_i_test
+
+for_i_end:
+end:
+    jmp end // Beskonačna petlja
+
+
+
+
+
+
+
+
+
+
+
+
+
+N E P A R N I    U    N I Z U
+
+/*
+short isEven(short el) {
+    return (el % 2 != 0 ? 1 : 0);
+}
+
+void main() {
+    short* p_result = 0x050;
+    short* p_done = 0x080;
+    short N = 20;
+    short a[] = {20590, 25312, 17168, 14675, 11588,
+                 12132, 13177, 30854, 2690, 8241,
+                 23335, 1754, 29835, 19197, 22232, 
+                 11977, 31980, 19601, 3786, 29568
+                };
+
+    // prebroj neparne brojeve u nizu
+    short cnt = 0;
+    for(short i = 0; i != N; i++) {
+        short elem_a = a[i];
+
+        if(isEven(elem_a))
+            cnt++;
+    }
+
+    *p_result = cnt;
+    *p_done = 1;
+}
+*/
+.data
+    0x050
+    0x080
+    20
+    20590, 25312, 17168, 14675, 11588,
+    12132, 13177, 30854, 2690, 8241,
+    23335, 1754, 29835, 19197, 22232, 
+    11977, 31980, 19601, 3786, 29568
+.text
+    /*  
+        R1 - N
+        R2 - i
+        R3 - cnt
+        R4 - tmp
+        R5 - mask
+        R6 - *p_result
+        R7 - *p_done
+    */
+main:
+    inc R0, R0  /* mem[1]      */
+    inc R0, R0  /* mem[2]      */
+
+    ld R1, R0   /* R1 = N = 20 */
+
+    inc R0, R0  /* mem[3]      */
+
+    /* Indeks 23 je kraj niza a, indeks 3 je početak niza a */
+    mov R2, R0  /* R2 = 20     */
+
+    inc R5, R5  /* bitmask 0x1 */
+    inc R1, R1  /* 21          */
+    inc R1, R1  /* 22          */
+    inc R1, R1  /* 23          */
+    
+for:
+    sub R4, R1, R2
+    jmpz upis_rezultata
+
+    ld R4, R2  /* a[i] u R4   */
+
+    /* ako je broj neparan u R4 biće rezultat 1 
+       ako je rezultat 0 onda je broj paran
+    */
+    and R4, R4, R5
+    jmpnz neparan
+
+    inc R2, R2  /* i++   */
+    jmp for
+
+neparan:
+    inc R3, R3  /* cnt++ */
+    inc R2, R2  /* i++   */
+    jmp for
+
+upis_rezultata:
+    sub R0, R0, R0  /* R0 = 0 */
+    ld  R6, R0      /* 0x0100 */
+
+    inc R0, R0
+    ld  R7, R0      /* 0x0200 */
+
+    st  R3, R6      /* 0x0100 = cnt */
+    st  R0, R7      /* 0x0200 = 1   */
+
+end:
+    jmp end
+
+
+
+
+
+
+
+
+
+
+
+
+N E P A R N I
+
+
+.data
+    10   // m[0] - broj elemenata
+    8    // m[1] - početak niza
+    6
+    3
+    7
+    5
+    11
+    8
+    23
+    1
+    3
+.text
+    sub R5, R5, R5      // adresa za upis
+    sub R0, R0, R0      // Za prolazak kroz niz
+    sub R4, R4, R4      // bit maska
+    sub R7, R7, R7      // neparni = 0
+    ld  R3, R0          // R0 <= mem[0] - broj elemenata niza
+begin:
+    inc R5, R5          // Pozicioniran na '10'
+    inc R5, R5          // Pozicioniran na '8'
+    add R5, R5, R5      // Pozicija na 16
+    dec R5, R5          // Pozicija 0xF --> 15  
+    inc R4, R4          // bit maska 0x1
+    ld R3, R0           // R3 = N = 10, prva vrednost u memoriji je broj elemenata
+for:
+    inc R0, R0          // R0 - adresa elementa niza iz memorije
+    sub R2, R3, R0      // for(i = 0, i<10, i++)
+    jmps endB           // ako je i > N , kraj
+    ld R1, R0           // R1 = a[i]
+    and R1, R1, R4      // AKO JE LSB == '1' --> neparni++
+    jmpz for            // paran broj - ne brojimo ga
+    jmpnz NEPARAN       // neparan broj - broji se
+NEPARAN:
+    inc R7, R7          // neparni++
+    jmp for
+endB:
+    st R5, R7          // R7 u memoriju na lokaciji 0xF
+    jmp end
+end:
+    jmp end            // Beskonačna petlja.
+
+
+
+
+
+
+
+
+
+
+
+
+N I Z O V I    V R    M A N J A     I N D
+/*
+Nizovi – vrednost < indeks
+Napisati program u asemblerskom jeziku koji pronalazi sve elemente niza od N elemenata čija je vrednost
+manja od njihovog rednog broja (indeksa). Elemente niza a koji zadovoljavaju uslov upisati u novi niz b u memoriji
+za podatke počevši od adrese 0x16.
+
+short N = 10
+short a[N] = { 65, 0, 6, -1, 23, 76, 1, -2, 65, 3};
+int j = 0x16;
+for (short i = 0; i < N; i++)
+	if(a[i] < i)
+	{
+		b[j] = a[i];
+		j++;
+	}
+*/
+
+.data
+    10                                      // n = 10
+    0x16
+    65, 0, 6, -1, 23, 76, 1, -2, 65, 3      // niz
+    // novi niz: 0, -1, 1, -2, 3
+.text
+
+begin:
+    ld  R7, R0                              // N  = 10
+    dec R7, R7                              // R7  = 9
+
+    inc R0, R0                              // j = 0x16 (22)
+    ld  R6, R0                              // R6 = 0x16
+
+    sub R5, R5, R5                          // R5 = 0 (i = 0)
+    inc R0, R0
+for:
+    sub R3, R7, R5
+    jmps end
+    
+    ld  R1, R0                              // i-ti element u nizu
+    sub R2, R1, R5                          // R2 = niz[i] - i
+    jmps upisUNoviNiz
+    jmp inkrement
+
+inkrement:
+    inc R0, R0                              // sledeci element
+    inc R5, R5                              // i++
+    jmp for
+
+upisUNoviNiz:
+    st  R1, R6                              // novi[j] = niz[i] 
+    inc R6, R6
+    jmp inkrement
+
+end:
+    jmp end
+
+
+
+
+
+
+
+
+
+
+O B R T A N J E      N I Z A
+
+
+/*
+Obrtanje niza
+Napisati program u asemblerskom jeziku koji obrće redosled brojeva u nizu od 10 elemenata. Voditi računa o
+poziciji elemenata niza u memoriji za podatke!
+// .data
+short N = 10;
+short a[10] = { 15, 12, 6, 33, 23, 76, 1, -5, 65, 7};
+// .text
+int j = N-1;
+int tmp = 0;
+for(int i=0; i<j; i++, j--)
+{
+    tmp = a[i];
+    a[i] = a[j];
+    a[j] = tmp;
+}
+*/
+
+data
+    10 // N = 10
+    15, 12, 6, 33, 23, 76, 1, -5, 65, 7
+.text
+/*
+R0 - i - index niza koji se čita od početka
+R1 - j - index niza koji se čita od nazad
+R2 - tmp_i
+R3 - tmp_j
+*/
+for_init:
+    ld R1, R0 // R1 = N = j = 10
+    inc R0, R0 // R0 = short* a = 1
+
+for_test:
+    sub R7, R1, R0 // i<j
+    jmps for_end
+
+for_body:
+    ld R2, R0 // tmp_i = a[i]
+    ld R3, R1 // tmp_j = a[j]
+    st R3, R0 // a[i] = tmp_j
+    st R2, R1 // a[j] = tmp_i
+
+for_inc:
+    inc R0, R0 // i++
+    dec R1, R1 // j--
+    jmp for_test
+
+for_end:
+end:
+    jmp end // Beskonačna petlja
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+S U M A    N I Z A     I      S T E P E N      D V O J K E
+
+
+
+
+
+.data
+    0x1A            /* 26 decimal */
+    0x20            /* 32 decimal */
+    5
+    -1, -2, -3, -4, 6
+
+.text
+    ld  R1, R0      /* R1 = 0x1A */
+    inc R0, R0      /* mem[1]    */
+
+    ld R2, R0       /* R2 = 0x20 */
+    inc R0, R0      /* mem[2]    */
+
+    ld R3, R0       /* R3 = 5    */
+
+    mov R5, R2      /* R5 = 32   */
+
+    inc R0, R0      /* RO = a[0] */
+main:
+    /*  R1 - p_result = 0x1A
+        R2 - p_done   = 0x20
+        R3 - N = 5
+        R4 - i = 0
+        R5 - pow
+        R6 - res
+        R7 - slobodan
+    */
+
+for:
+    sub R7, R4, R3 
+    jmpz mem_write
+
+    ld  R7, R0     /* U R7 smesti vrednost a[i] */
+
+    add R6, R6, R7 /* res = res + a[i] */
+
+    inc R0, R0     /* sledeci element */
+    inc R4, R4     /* i++ */
+    jmp for
+  
+mem_write:
+    add R6, R6, R5      /* res = res + pow */
+    ashr R6, R6         /* res = res / 2   */
+    ashr R6, R6         /* res = res / 2   */
+
+    st  R6, R1          /* *p_result = res */
+
+    sub R0, R0, R0     /* R0 = 0           */
+    inc R0, R0         /* R0 = 1           */
+
+    st  R0, R2         /* *p_done = 1      */
+
+end:
+    jmp end
+
+
+
+
+
+
+
+U M E T A N J E     B R O J A     U     N I Z
+
+/*
+Umetanje elementa u niz u memoriji
+Napisati program u asemblerskom jeziku koji u zadati niz od N elemenata izvršava umetanje broja 0xFFFF na
+zadatu poziciju k (0 < k < N-1). Poziciju zadati u memoriji za podatke. Voditi računa o poziciji elemenata niza u
+memoriji za podatke!
+*/
+.data
+    10                                      // n = 10
+    5                                       // k = 5
+    0xFFFF                                  // broj za umetanje
+    -8, 12, 6, 33, 23, 76, 1, -5, 65, 7     // niz
+.text
+
+begin:
+    ld R7, R0                               // N  = 10
+    dec R7, R7                              // N  = 9
+
+    inc R0, R0                              // k  = 5
+    ld  R6, R0                              // R6 = 5 
+    dec R6, R6                              // R6 = 4
+    shl R6, R6                              // shl je Rx * 2
+    dec R6, R6                              // 7
+
+    inc R0, R0                              // pokazuje na broj za umetanje
+    ld R5,  R0                              // R5 = 0xFFFF
+
+    inc R0, R0                              // pokazuje prvi element niza
+    add R0, R0, R7                          // R0 = niz[N - 2]
+    inc R0, R0                              // mem[12]
+    mov  R1, R0                             // R1 = niz[N - 1]
+    inc R0, R0                              // mem[13]
+    
+    add R7, R7, R6                          // indeks = 9 + 7
+    dec R7, R7                              // 15
+    dec R7, R7                              // 14
+    dec R7, R7                              // 13
+
+for:
+    sub R4, R7, R6                          // R4 = R7 - R6 (i - k)
+    jmpz umetanje                           // pomereni su svi, izvrsiti umetanje
+    mov R0, R1                              // niz[i + 1] = niz[i]
+    dec R7, R7                              // i--
+    dec R0, R0                              // niz[N - i]
+    dec R1, R1                              // niz[N - 1 - i]
+    jmp for
+
+umetanje:
+    st  R5, R0                              // niz[k - 1] = 0xFFFF 
+    jmp end
+
+end:
+    jmp end
+
+
+
+
+

@@ -1,0 +1,109 @@
+library ieee;
+use ieee.std_logic_1164.all;
+
+------------------------------------------------------------------------------------------
+-- OBAVEZNO UPIŠITE IME, PREZIME i BROJ INDEKSA!
+-- Ime i prezime: Nevena Marjanovic
+-- Broj indeksa: pr30/2020
+-- Radim samo popravni (upisati DA ako je iskaz tačan): 
+------------------------------------------------------------------------------------------
+
+entity Zadatak1_tb is
+end entity;
+ 
+architecture Test of Zadatak1_tb is
+  
+	signal	sCLK  	: std_logic;
+	signal	sRST  	: std_logic;
+	signal	sWEIGHT 	: std_logic_vector(10 downto 0);
+	signal	sON	  	: std_logic;
+	signal	oWEIGHT 	: std_logic_vector(10 downto 0);
+	signal	sERROR	: std_logic;
+	
+	constant iCLK_period : time := 10 ns; 
+   
+	component Zadatak1 is port ( 
+		iCLK  	: in  std_logic;
+		iRST  	: in  std_logic;
+		iWEIGHT 	: in  std_logic_vector(10 downto 0);
+		iON	  	: in  std_logic;
+		oWEIGHT 	: out std_logic_vector(10 downto 0);
+		oERROR	: out std_logic
+	);
+	end component;
+
+begin
+
+   uut: Zadatak1 port map (
+          iCLK 	=> sCLK, 	
+          iRST 	=> sRST,  	
+          iWEIGHT => sWEIGHT, 	
+          iON	   => sON, 	
+          oWEIGHT => oWEIGHT,
+          oERROR	=> sERROR	
+	);
+	
+	iCLK_process: process
+	begin
+		sCLK <= '0';
+		wait for iCLK_period / 2; -- iCLK_period je konstanta
+		sCLK <= '1';
+		wait for iCLK_period / 2;
+	end process;
+
+   stim_proc : process
+   begin		
+	
+		sRST <= '1';
+		wait for 3.25*iCLK_period;
+		sRST <= '0';
+		
+		sON <= '1';
+		sWEIGHT <= "00001100100"; --100
+		wait for 9*iCLK_period;
+		sWEIGHT <= "00100101100"; --DODAJEMO JOS 200 odnosno u sWEIGHT upisujemo 300 a na izlaz 20 (probala sam sabirati ne moze)
+		oWEIGHT <= "00011001000"; --NA IZLAZU CE PISATI TIH 200
+		
+		wait for (9*2)*iCLK_period; --cekamo da se automat vrati na pocetno stanje 
+		
+		--resetujemo sistem na 5 taktova
+		sRST <= '1';
+		wait for 5*iCLK_period;
+		sRST <= '0';
+		
+		sWEIGHT <= "00011001000"; --postavimo tanjir od 200g
+		sWEIGHT <= "00111110100"; --na njega jos 300, tj upisujemo 500 a na izlaz 300
+		oWEIGHT <= "00100101100";
+		
+		--vratiti automat u pocetno stanje
+		wait for (9*2)*iCLK_period;
+		
+		--resetujemo sistem na 5 taktova
+		sRST <= '1';
+		wait for 5*iCLK_period;
+		sRST <= '0';
+		
+		sWEIGHT <= "01010111100"; -- 700 oval
+		sWEIGHT <= "10111011100"; --dodamo 800, tj ovde 1500 a na izlaz 800
+		oWEIGHT <= "01100100000";
+		
+		--otisao na error, potom u idle
+		wait for 5*iCLK_period; --sacekamo neki period da dodje do idle
+		
+		--resetujemo sistem na 5 taktova
+		sRST <= '1';
+		wait for 5*iCLK_period;
+		sRST <= '0';
+		
+		sWEIGHT <= "10111011100"; --lonac od 1500
+		wait for 5*iCLK_period; --sacekamo neki period da dodje do idle
+		
+		--resetujemo sistem na 5 taktova
+		sRST <= '1';
+		wait for 5*iCLK_period;
+		sRST <= '0';
+		
+		
+		wait;
+   end process;
+end architecture;
